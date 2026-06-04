@@ -4,73 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Linked AI — CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f0f14;
-      --surface: #17171f;
-      --surface2: #1e1e2a;
-      --border: #2a2a3a;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
-      --green: #22c55e;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --text: #e2e2f0;
-      --muted: #6b6b8a;
-      --radius: 10px;
+      --bg:     #060b18;
+      --surf:   #080e1c;
+      --card:   #0a1122;
+      --cyan:   #00c8ff;
+      --c50:    rgba(0,200,255,.5);
+      --c15:    rgba(0,200,255,.15);
+      --c08:    rgba(0,200,255,.08);
+      --c03:    rgba(0,200,255,.03);
+      --bord:   rgba(0,200,255,.12);
+      --bord2:  rgba(0,200,255,.45);
+      --text:   #ddeeff;
+      --muted:  rgba(180,210,255,.6);
+      --green:  #00c853;
+      --yellow: #febc2e;
+      --red:    #ff5f57;
+      --radius: 14px;
     }
 
+    html { background: var(--bg); scroll-behavior: smooth; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
+      font-family: 'Inter', system-ui, sans-serif;
+      background: transparent;
       color: var(--text);
       min-height: 100vh;
       font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Spline background ── */
+    .spline-bg {
+      position: fixed; inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .spline-bg iframe { width: 100%; height: 100%; display: block; }
+
+    /* ── Cursor glow ── */
+    .cursor-glow {
+      pointer-events: none;
+      position: fixed; z-index: 9999;
+      width: 380px; height: 380px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,200,255,.07) 0%, transparent 65%);
+      transform: translate(-50%,-50%);
+      transition: left .05s linear, top .05s linear;
     }
 
     /* ── Header ── */
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 28px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(6,11,24,.82);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--bord);
     }
     .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: -0.3px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.25rem; font-weight: 900;
+      letter-spacing: -.04em; text-decoration: none; color: var(--text);
     }
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
-    .today-date {
-      color: var(--muted);
-      font-size: 13px;
-    }
+    .logo-svg { flex-shrink: 0; }
+    .logo-accent { color: var(--cyan); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .today-date { color: var(--muted); font-size: 12px; font-weight: 500; }
 
     /* ── Layout ── */
-    main {
-      max-width: 1280px;
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 1300px;
       margin: 0 auto;
-      padding: 28px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
+      padding: 32px 28px 60px;
+      display: flex; flex-direction: column; gap: 32px;
     }
 
     /* ── Stat Cards ── */
@@ -80,67 +95,94 @@
       gap: 16px;
     }
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: linear-gradient(var(--card), var(--card)) padding-box,
+                  linear-gradient(155deg, rgba(0,200,255,.2), rgba(0,200,255,.04)) border-box;
+      border: 1px solid transparent;
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 22px 24px;
+      box-shadow: 0 0 40px rgba(0,200,255,.04);
+      transition: box-shadow .2s;
     }
-    .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
-    .stat-value { font-size: 32px; font-weight: 700; line-height: 1; }
-    .stat-sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
-    .c-green { color: var(--green); }
-    .c-yellow { color: var(--yellow); }
-    .c-red { color: var(--red); }
-    .c-blue { color: var(--blue); }
+    .stat-card:hover { box-shadow: 0 0 60px rgba(0,200,255,.1); }
+    .stat-label {
+      color: var(--muted); font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
+    }
+    .stat-value { font-size: 34px; font-weight: 900; line-height: 1; letter-spacing: -.04em; }
+    .stat-sub { color: var(--muted); font-size: 12px; margin-top: 6px; font-weight: 500; }
+    .c-cyan   { color: var(--cyan);   text-shadow: 0 0 24px rgba(0,200,255,.45); }
+    .c-green  { color: var(--green);  text-shadow: 0 0 20px rgba(0,200,83,.4); }
+    .c-yellow { color: var(--yellow); text-shadow: 0 0 20px rgba(254,188,46,.3); }
+    .c-red    { color: var(--red); }
 
     /* ── Section ── */
     .section { display: flex; flex-direction: column; gap: 14px; }
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
+    .section-header { display: flex; align-items: center; justify-content: space-between; }
+    .section-header-left { display: flex; align-items: center; gap: 14px; }
+    .section-title {
+      font-size: 15px; font-weight: 700; letter-spacing: -.02em;
     }
-    .section-title { font-size: 16px; font-weight: 600; }
+
+    /* ── Buttons ── */
     .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px;
+      background: var(--cyan);
+      color: #060b18;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 700;
       cursor: pointer;
-      transition: opacity .15s;
+      font-family: inherit;
+      transition: all .2s;
+      box-shadow: 0 0 22px rgba(0,200,255,.3);
+      white-space: nowrap;
     }
-    .btn:hover { opacity: .85; }
+    .btn:hover { background: #22d4ff; transform: translateY(-1px); box-shadow: 0 0 36px rgba(0,200,255,.5); }
     .btn-ghost {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
+      background: rgba(0,200,255,.06);
+      color: var(--cyan);
+      border: 1px solid var(--bord2);
+      box-shadow: none;
     }
-    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; }
+    .btn-ghost:hover { background: var(--c15); transform: none; box-shadow: 0 0 16px rgba(0,200,255,.15); }
+    .btn-danger {
+      background: rgba(255,95,87,.12);
+      color: var(--red);
+      border: 1px solid rgba(255,95,87,.3);
+      box-shadow: none;
+    }
+    .btn-danger:hover { background: rgba(255,95,87,.22); transform: none; box-shadow: none; }
+    .btn-sm { padding: 5px 11px; font-size: 11px; border-radius: 6px; }
 
     /* ── Two-column grid ── */
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 
-    /* ── Table ── */
+    /* ── Glassy card ── */
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: linear-gradient(var(--card), var(--card)) padding-box,
+                  linear-gradient(155deg, rgba(0,200,255,.18), rgba(0,200,255,.03)) border-box;
+      border: 1px solid transparent;
       border-radius: var(--radius);
       overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,200,255,.05);
     }
+
+    /* ── Table ── */
     table { width: 100%; border-collapse: collapse; }
     thead th {
-      padding: 12px 16px;
+      padding: 11px 16px;
       text-align: left;
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: .6px;
+      letter-spacing: .7px;
       color: var(--muted);
-      background: var(--surface2);
-      font-weight: 600;
+      background: rgba(0,200,255,.04);
+      font-weight: 700;
+      border-bottom: 1px solid var(--bord);
     }
-    tbody tr { border-top: 1px solid var(--border); }
-    tbody tr:hover { background: var(--surface2); }
+    tbody tr { border-top: 1px solid var(--bord); transition: background .12s; }
+    tbody tr:first-child { border-top: none; }
+    tbody tr:hover { background: rgba(0,200,255,.04); }
     td { padding: 12px 16px; vertical-align: middle; }
 
     /* ── Badges ── */
@@ -148,117 +190,157 @@
       display: inline-block;
       padding: 3px 9px;
       border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 11px; font-weight: 600;
     }
-    .badge-active   { background: rgba(34,197,94,.15);  color: var(--green); }
-    .badge-pending  { background: rgba(245,158,11,.15); color: var(--yellow); }
-    .badge-done     { background: rgba(107,107,138,.15); color: var(--muted); }
-    .badge-paused   { background: rgba(59,130,246,.15); color: var(--blue); }
-    .badge-high     { background: rgba(239,68,68,.15); color: var(--red); }
-    .badge-medium   { background: rgba(245,158,11,.15); color: var(--yellow); }
-    .badge-low      { background: rgba(34,197,94,.15); color: var(--green); }
+    .badge-active  { background: rgba(0,200,83,.12);   color: var(--green);  border: 1px solid rgba(0,200,83,.25); }
+    .badge-pending { background: rgba(254,188,46,.1);  color: var(--yellow); border: 1px solid rgba(254,188,46,.25); }
+    .badge-done    { background: rgba(0,200,255,.06);  color: var(--muted);  border: 1px solid var(--bord); }
+    .badge-paused  { background: rgba(0,200,255,.08);  color: var(--cyan);   border: 1px solid var(--bord2); }
+    .badge-high    { background: rgba(255,95,87,.12);  color: var(--red);    border: 1px solid rgba(255,95,87,.3); }
+    .badge-medium  { background: rgba(254,188,46,.1);  color: var(--yellow); border: 1px solid rgba(254,188,46,.25); }
+    .badge-low     { background: rgba(0,200,83,.1);    color: var(--green);  border: 1px solid rgba(0,200,83,.2); }
 
     /* ── Row actions ── */
     .row-actions { display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
     tbody tr:hover .row-actions { opacity: 1; }
+    .contact-item:hover .row-actions { opacity: 1; }
 
     /* ── Notes ── */
     .notes-text { color: var(--muted); font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Progress bar ── */
     .progress-wrap { display: flex; align-items: center; gap: 8px; }
-    .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 80px; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width .3s; }
-    .progress-label { font-size: 12px; color: var(--muted); min-width: 30px; text-align: right; }
+    .progress-bar { flex: 1; height: 5px; background: rgba(0,200,255,.1); border-radius: 3px; overflow: hidden; min-width: 80px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), rgba(0,200,255,.6)); border-radius: 3px; transition: width .3s; box-shadow: 0 0 8px rgba(0,200,255,.5); }
+    .progress-label { font-size: 11px; color: var(--muted); min-width: 30px; text-align: right; font-weight: 600; }
+
+    /* ── Project groups ── */
+    .group-header { cursor: pointer; user-select: none; }
+    .group-header td {
+      padding: 9px 16px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .9px;
+      color: var(--cyan);
+      background: rgba(0,200,255,.06);
+      border-top: 1px solid var(--bord);
+    }
+    .group-header:first-child td { border-top: none; }
+    .group-header:hover td { background: rgba(0,200,255,.1); }
+    .group-header.internal td { color: var(--muted); background: rgba(180,210,255,.03); }
+    .group-header.internal:hover td { background: rgba(180,210,255,.06); }
+    .group-toggle { display: inline-block; font-size: 9px; margin-right: 8px; transition: transform .18s; }
+    .group-toggle.collapsed { transform: rotate(-90deg); }
+    .group-count { margin-left: 8px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: none; letter-spacing: 0; }
+    .group-row.hidden { display: none; }
+
+    /* ── Search ── */
+    .search-input {
+      background: rgba(0,200,255,.05);
+      border: 1px solid var(--bord);
+      border-radius: 8px;
+      padding: 7px 13px;
+      color: var(--text);
+      font-size: 13px; font-weight: 500;
+      font-family: inherit;
+      outline: none;
+      width: 200px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--bord2); box-shadow: 0 0 16px rgba(0,200,255,.1); }
 
     /* ── Modal ── */
     .modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,.6);
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
-      z-index: 200;
+      z-index: 300;
       opacity: 0; pointer-events: none;
       transition: opacity .2s;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px;
-      width: 480px;
+      background: linear-gradient(var(--card), var(--card)) padding-box,
+                  linear-gradient(155deg, rgba(0,200,255,.3), rgba(0,200,255,.06)) border-box;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 30px;
+      width: 490px;
       max-width: calc(100vw - 40px);
-      transform: translateY(12px);
-      transition: transform .2s;
+      box-shadow: 0 0 80px rgba(0,200,255,.15);
+      transform: translateY(14px);
+      transition: transform .22s;
     }
     .modal-overlay.open .modal { transform: none; }
-    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+    .modal-title { font-size: 17px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 22px; }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .form-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 9px 12px;
+      background: rgba(0,200,255,.05);
+      border: 1px solid var(--bord);
+      border-radius: 8px;
+      padding: 9px 13px;
       color: var(--text);
-      font-size: 14px;
-      outline: none;
+      font-size: 14px; font-weight: 500;
       font-family: inherit;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
     }
     .form-group input:focus,
     .form-group select:focus,
-    .form-group textarea:focus { border-color: var(--accent); }
-    .form-group select option { background: var(--surface2); }
+    .form-group textarea:focus { border-color: var(--bord2); box-shadow: 0 0 14px rgba(0,200,255,.1); }
+    .form-group select option { background: var(--card); }
     .form-group textarea { resize: vertical; min-height: 70px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 26px; }
 
     /* ── Empty state ── */
-    .empty { padding: 40px; text-align: center; color: var(--muted); }
-    .empty-icon { font-size: 32px; margin-bottom: 8px; }
+    .empty { padding: 40px; text-align: center; color: var(--muted); font-weight: 500; }
+    .empty-icon { font-size: 28px; margin-bottom: 8px; opacity: .5; }
 
-    /* ── Contacts sidebar ── */
-    .contact-list { display: flex; flex-direction: column; gap: 0; }
+    /* ── Contacts ── */
+    .contact-list { display: flex; flex-direction: column; }
     .contact-item {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      cursor: pointer;
+      border-top: 1px solid var(--bord);
+      transition: background .12s;
     }
     .contact-item:first-child { border-top: none; }
-    .contact-item:hover { background: var(--surface2); }
+    .contact-item:hover { background: rgba(0,200,255,.04); }
     .avatar {
       width: 36px; height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background: linear-gradient(135deg, rgba(0,200,255,.3), rgba(0,100,200,.3));
+      border: 1px solid var(--bord2);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 13px;
+      font-weight: 800; font-size: 12px; color: var(--cyan);
       flex-shrink: 0;
     }
     .contact-info { flex: 1; min-width: 0; }
     .contact-name { font-weight: 600; font-size: 13px; }
-    .contact-detail { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .contact-detail { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
     /* ── Activity feed ── */
     .activity-list { display: flex; flex-direction: column; }
     .activity-item {
       display: flex; gap: 12px; align-items: flex-start;
       padding: 12px 16px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--bord);
     }
     .activity-item:first-child { border-top: none; }
     .activity-dot {
-      width: 8px; height: 8px;
+      width: 7px; height: 7px;
       border-radius: 50%;
-      background: var(--accent);
-      margin-top: 5px;
-      flex-shrink: 0;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      margin-top: 5px; flex-shrink: 0;
     }
-    .activity-text { font-size: 13px; line-height: 1.5; }
+    .activity-text { font-size: 13px; line-height: 1.5; font-weight: 500; }
     .activity-time { color: var(--muted); font-size: 11px; margin-top: 2px; }
 
     /* ── Responsive ── */
@@ -268,63 +350,47 @@
     }
     @media (max-width: 560px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
-      main { padding: 16px 12px; }
+      .page-wrap { padding: 20px 14px 40px; }
     }
 
-    /* ── Delete confirm ── */
-    .btn-danger { background: var(--red); }
-    .btn-danger:hover { opacity: .85; }
-
-    input[type="range"] { accent-color: var(--accent); }
-
-    /* ── Project groups ── */
-    .group-header { cursor: pointer; user-select: none; }
-    .group-header td {
-      padding: 9px 16px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      color: var(--accent2);
-      background: rgba(108,99,255,.08);
-      border-top: 2px solid var(--border);
-    }
-    .group-header:first-child td { border-top: none; }
-    .group-header:hover td { background: rgba(108,99,255,.14); }
-    .group-header.internal td { color: var(--muted); background: rgba(107,107,138,.08); }
-    .group-header.internal:hover td { background: rgba(107,107,138,.13); }
-    .group-toggle { display: inline-block; font-size: 9px; margin-right: 8px; transition: transform .18s; }
-    .group-toggle.collapsed { transform: rotate(-90deg); }
-    .group-count { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: 11px; text-transform: none; letter-spacing: 0; }
-    .group-row.hidden { display: none; }
-
-    /* ── Search ── */
-    .search-input {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 7px 12px;
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      width: 190px;
-    }
-    .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { border-color: var(--accent); }
-    .section-header-left { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] { accent-color: var(--cyan); width: 100%; }
   </style>
 </head>
 <body>
 
+<!-- Spline background -->
+<div class="spline-bg">
+  <iframe src="https://my.spline.design/unchained-xtTdSljALQfR7kT0udfnV1ua/" frameborder="0" width="100%" height="100%"></iframe>
+</div>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
 <header>
-  <div class="logo">
-    <div class="logo-icon">⚡</div>
-    Linked AI
+  <a class="logo" href="#">
+    <!-- LinkedAI chain-link SVG logo (same as site) -->
+    <svg class="logo-svg" width="52" height="28" viewBox="0 0 124 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="gfl" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gfr" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gfc" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <radialGradient id="rgl" cx="35%" cy="45%"><stop offset="0%" stop-color="#fff" stop-opacity=".25"/><stop offset="100%" stop-color="#4fc3f7" stop-opacity="0"/></radialGradient>
+        <radialGradient id="rgr" cx="65%" cy="45%"><stop offset="0%" stop-color="#fff" stop-opacity=".18"/><stop offset="100%" stop-color="#3050e8" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect x="3" y="8" width="68" height="48" rx="24" fill="url(#rgl)"/>
+      <rect x="3" y="8" width="68" height="48" rx="24" fill="rgba(79,195,247,.12)" stroke="#4fc3f7" stroke-width="4.5" filter="url(#gfl)"/>
+      <rect x="53" y="8" width="68" height="48" rx="24" fill="url(#rgr)"/>
+      <rect x="53" y="8" width="68" height="48" rx="24" fill="rgba(48,64,220,.12)" stroke="#4060ea" stroke-width="4.5" filter="url(#gfr)"/>
+      <rect x="46" y="24" width="32" height="16" rx="8" fill="#c8f0ff" filter="url(#gfc)"/>
+    </svg>
+    Linked<span class="logo-accent">AI</span>
+  </a>
+  <div class="header-right">
+    <div class="today-date" id="headerDate"></div>
   </div>
-  <div class="today-date" id="headerDate"></div>
 </header>
 
-<main>
+<div class="page-wrap">
+
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
 
@@ -398,7 +464,8 @@
     </div>
     <div class="card activity-list" id="activityFeed"></div>
   </div>
-</main>
+
+</div>
 
 <!-- ── Modal ── -->
 <div class="modal-overlay" id="modalOverlay" onclick="maybeClose(event)">
@@ -413,6 +480,13 @@
 </div>
 
 <script>
+// ── Cursor glow ──
+const glow = document.getElementById('cursorGlow');
+document.addEventListener('mousemove', e => {
+  glow.style.left = e.clientX + 'px';
+  glow.style.top  = e.clientY + 'px';
+});
+
 // ── Storage helpers ──
 const load = key => JSON.parse(localStorage.getItem('lai_' + key) || '[]');
 const save = (key, val) => localStorage.setItem('lai_' + key, JSON.stringify(val));
@@ -430,33 +504,33 @@ const DATA_VERSION = '2';
 if (localStorage.getItem('lai_version') !== DATA_VERSION) {
   projects = [
     // ── Client Projects ──
-    { id: uid(), name: 'MNG Carpentry CRM',               client: 'MNG Carpentry',   status: 'active',  progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Tyson Funk CRM',                  client: 'Tyson Funk',      status: 'active',  progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'MNG Carpentry CRM',                 client: 'MNG Carpentry',     status: 'active',  progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Tyson Funk CRM',                    client: 'Tyson Funk',         status: 'active',  progress: 0, due: '', notes: '' },
 
     // ── Global Drain (5 projects) ──
-    { id: uid(), name: 'Receipt Tracker',                 client: 'Global Drain',    status: 'active',  progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 2',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 3',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 4',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 5',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Receipt Tracker',                   client: 'Global Drain',       status: 'active',  progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 2',                         client: 'Global Drain',       status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 3',                         client: 'Global Drain',       status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 4',                         client: 'Global Drain',       status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 5',                         client: 'Global Drain',       status: 'pending', progress: 0, due: '', notes: '' },
 
     // ── Preceipt (5 projects) ──
-    { id: uid(), name: 'Project 1',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 2',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 3',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 4',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Project 5',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 1',                         client: 'Preceipt',           status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 2',                         client: 'Preceipt',           status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 3',                         client: 'Preceipt',           status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 4',                         client: 'Preceipt',           status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Project 5',                         client: 'Preceipt',           status: 'pending', progress: 0, due: '', notes: '' },
 
     // ── Evolution Wheel ──
-    { id: uid(), name: 'Marketing Engine / Scraper',      client: 'Evolution Wheel', status: 'active',  progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Marketing Engine / Scraper',        client: 'Evolution Wheel',    status: 'active',  progress: 0, due: '', notes: '' },
 
     // ── Argus ──
-    { id: uid(), name: 'Pilot Demo — CSR Invoice PDF Flow', client: 'Argus',         status: 'active',  progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Pilot Demo — CSR Invoice PDF Flow', client: 'Argus',              status: 'active',  progress: 0, due: '', notes: '' },
 
     // ── Internal / Business ──
-    { id: uid(), name: 'Insurance',                       client: 'Internal',        status: 'pending', progress: 0,  due: '', notes: '' },
-    { id: uid(), name: 'Mitacs Grant',                    client: 'Internal — Grants', status: 'pending', progress: 0, due: '', notes: '' },
-    { id: uid(), name: 'IRAP Grant',                      client: 'Internal — Grants', status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Insurance',                         client: 'Internal',           status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'Mitacs Grant',                      client: 'Internal — Grants',  status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'IRAP Grant',                        client: 'Internal — Grants',  status: 'pending', progress: 0, due: '', notes: '' },
   ];
   tasks    = [];
   contacts = [];
@@ -495,7 +569,7 @@ function renderStats() {
   document.getElementById('statsRow').innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Active Projects</div>
-      <div class="stat-value c-green">${active}</div>
+      <div class="stat-value c-cyan">${active}</div>
       <div class="stat-sub">${pending} pending</div>
     </div>
     <div class="stat-card">
@@ -505,7 +579,7 @@ function renderStats() {
     </div>
     <div class="stat-card">
       <div class="stat-label">Contacts</div>
-      <div class="stat-value c-blue">${contacts.length}</div>
+      <div class="stat-value c-cyan">${contacts.length}</div>
       <div class="stat-sub">in pipeline</div>
     </div>
     <div class="stat-card">
@@ -526,27 +600,18 @@ function priorityBadge(p) {
 }
 function fmtDate(d) {
   if (!d) return '—';
-  const dt = new Date(d + 'T00:00:00');
-  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const collapsedGroups = new Set();
-
 function slugify(s) { return s.replace(/[^a-z0-9]/gi, '_'); }
 
 function toggleGroup(client) {
   const slug = slugify(client);
-  if (collapsedGroups.has(slug)) {
-    collapsedGroups.delete(slug);
-  } else {
-    collapsedGroups.add(slug);
-  }
-  // toggle visibility without full re-render
-  const rows = document.querySelectorAll('.group-row-' + slug);
+  collapsedGroups.has(slug) ? collapsedGroups.delete(slug) : collapsedGroups.add(slug);
+  document.querySelectorAll('.group-row-' + slug).forEach(r => r.classList.toggle('hidden', collapsedGroups.has(slug)));
   const icon = document.getElementById('gtoggle-' + slug);
-  const isCollapsed = collapsedGroups.has(slug);
-  rows.forEach(r => r.classList.toggle('hidden', isCollapsed));
-  if (icon) icon.classList.toggle('collapsed', isCollapsed);
+  if (icon) icon.classList.toggle('collapsed', collapsedGroups.has(slug));
 }
 
 function renderProjects() {
@@ -557,24 +622,20 @@ function renderProjects() {
   }
 
   const q = (document.getElementById('projectSearch')?.value || '').toLowerCase();
-
-  // Separate internal from client projects
-  const clientProjects  = projects.filter(p => !p.client.startsWith('Internal'));
+  const clientProjects   = projects.filter(p => !p.client.startsWith('Internal'));
   const internalProjects = projects.filter(p => p.client.startsWith('Internal'));
 
-  // Group by client, preserving insertion order
-  const groupMap = (list) => {
+  const groupMap = list => {
     const map = {};
     list.forEach(p => { (map[p.client] = map[p.client] || []).push(p); });
     return Object.entries(map);
   };
 
-  const renderRow = (p) => {
+  const renderRow = p => {
     if (q && !p.name.toLowerCase().includes(q) && !p.client.toLowerCase().includes(q)) return '';
     const slug = slugify(p.client);
-    const hidden = collapsedGroups.has(slug) ? 'hidden' : '';
     return `
-      <tr class="group-row group-row-${slug} ${hidden}">
+      <tr class="group-row group-row-${slug} ${collapsedGroups.has(slug) ? 'hidden' : ''}">
         <td><strong>${esc(p.name)}</strong></td>
         <td>${statusBadge(p.status)}</td>
         <td>
@@ -594,15 +655,15 @@ function renderProjects() {
       </tr>`;
   };
 
-  const renderGroupHeader = (client, projs, isInternal = false) => {
+  const renderGroup = (client, projs, isInternal = false) => {
     const slug = slugify(client);
     const visible = projs.filter(p => !q || p.name.toLowerCase().includes(q) || p.client.toLowerCase().includes(q));
-    if (visible.length === 0) return '';
-    const isCollapsed = collapsedGroups.has(slug);
+    if (!visible.length) return '';
+    const collapsed = collapsedGroups.has(slug);
     return `
       <tr class="group-header ${isInternal ? 'internal' : ''}" onclick="toggleGroup('${client.replace(/'/g,"\\'")}')">
         <td colspan="6">
-          <span class="group-toggle ${isCollapsed ? 'collapsed' : ''}" id="gtoggle-${slug}">▼</span>
+          <span class="group-toggle ${collapsed ? 'collapsed' : ''}" id="gtoggle-${slug}">▼</span>
           ${esc(client)}
           <span class="group-count">${visible.length} project${visible.length !== 1 ? 's' : ''}</span>
         </td>
@@ -610,11 +671,10 @@ function renderProjects() {
       ${visible.map(renderRow).join('')}`;
   };
 
-  const clientHtml   = groupMap(clientProjects).map(([c, ps]) => renderGroupHeader(c, ps, false)).join('');
-  const internalHtml = groupMap(internalProjects).map(([c, ps]) => renderGroupHeader(c, ps, true)).join('');
+  const html = groupMap(clientProjects).map(([c,ps]) => renderGroup(c, ps, false)).join('')
+             + groupMap(internalProjects).map(([c,ps]) => renderGroup(c, ps, true)).join('');
 
-  body.innerHTML = clientHtml + internalHtml ||
-    `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div>No results</div></td></tr>`;
+  body.innerHTML = html || `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div>No results</div></td></tr>`;
 }
 
 function renderTasks() {
@@ -630,10 +690,10 @@ function renderTasks() {
     return (order[a.priority]||1) - (order[b.priority]||1);
   });
   body.innerHTML = sorted.map(t => `
-    <tr style="${t.status==='done'?'opacity:.5':''}">
+    <tr style="${t.status==='done'?'opacity:.4':''}">
       <td>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" ${t.status==='done'?'checked':''} onchange="toggleTask('${t.id}')" style="accent-color:var(--accent)">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer">
+          <input type="checkbox" ${t.status==='done'?'checked':''} onchange="toggleTask('${t.id}')" style="accent-color:var(--cyan);width:15px;height:15px">
           <span style="${t.status==='done'?'text-decoration:line-through':''}">${esc(t.name)}</span>
         </label>
       </td>
@@ -688,59 +748,36 @@ function renderActivity() {
   `).join('');
 }
 
-function initials(name) {
-  return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-}
+function initials(name) { return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Toggle task ──
 function toggleTask(id) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.status = t.status === 'done' ? 'pending' : 'done';
   logActivity(t.status === 'done' ? `Task "${t.name}" completed` : `Task "${t.name}" reopened`);
-  persist();
-  render();
+  persist(); render();
 }
 
-// ── Delete ──
 function deleteItem(type, id) {
   if (!confirm('Delete this item?')) return;
-  if (type === 'project') {
-    const p = projects.find(x=>x.id===id);
-    projects = projects.filter(x=>x.id!==id);
-    logActivity(`Project "${p?.name}" deleted`);
-  } else if (type === 'task') {
-    const t = tasks.find(x=>x.id===id);
-    tasks = tasks.filter(x=>x.id!==id);
-    logActivity(`Task "${t?.name}" deleted`);
-  } else if (type === 'contact') {
-    const c = contacts.find(x=>x.id===id);
-    contacts = contacts.filter(x=>x.id!==id);
-    logActivity(`Contact "${c?.name}" removed`);
-  }
-  persist();
-  render();
+  if (type === 'project') { const p = projects.find(x=>x.id===id); projects = projects.filter(x=>x.id!==id); logActivity(`Project "${p?.name}" deleted`); }
+  else if (type === 'task') { const t = tasks.find(x=>x.id===id); tasks = tasks.filter(x=>x.id!==id); logActivity(`Task "${t?.name}" deleted`); }
+  else if (type === 'contact') { const c = contacts.find(x=>x.id===id); contacts = contacts.filter(x=>x.id!==id); logActivity(`Contact "${c?.name}" removed`); }
+  persist(); render();
 }
 
-// ── Activity ──
 function logActivity(text) {
   activity.unshift({ text, time: 'Just now' });
   activity = activity.slice(0, 50);
 }
-function clearActivity() {
-  activity = [];
-  persist();
-  render();
-}
+function clearActivity() { activity = []; persist(); render(); }
 
-// ── Modal ──
 function openModal(mode, data = null) {
-  modalMode = mode;
-  editingId = data?.id || null;
+  modalMode = mode; editingId = data?.id || null;
   const overlay = document.getElementById('modalOverlay');
   const title   = document.getElementById('modalTitle');
   const body    = document.getElementById('modalBody');
@@ -756,14 +793,13 @@ function openModal(mode, data = null) {
         <div class="form-group"><label>Status</label>
           <select id="f_status">
             ${['active','pending','paused','done'].map(s=>`<option ${data?.status===s?'selected':''} value="${s}">${s}</option>`).join('')}
-          </select>
-        </div>
+          </select></div>
         <div class="form-group"><label>Due Date</label>
           <input type="date" id="f_due" value="${data?.due||''}" /></div>
       </div>
       <div class="form-group"><label>Progress (${data?.progress||0}%)</label>
-        <input type="range" id="f_progress" min="0" max="100" value="${data?.progress||0}" oninput="this.previousElementSibling.textContent='Progress (' + this.value + '%)'" />
-      </div>
+        <input type="range" id="f_progress" min="0" max="100" value="${data?.progress||0}"
+          oninput="this.previousElementSibling.textContent='Progress (' + this.value + '%)'" /></div>
       <div class="form-group"><label>Notes</label>
         <textarea id="f_notes">${esc(data?.notes||'')}</textarea></div>
     `;
@@ -776,13 +812,11 @@ function openModal(mode, data = null) {
         <div class="form-group"><label>Priority</label>
           <select id="f_priority">
             ${['high','medium','low'].map(p=>`<option ${data?.priority===p?'selected':''} value="${p}">${p}</option>`).join('')}
-          </select>
-        </div>
+          </select></div>
         <div class="form-group"><label>Status</label>
           <select id="f_status">
             ${['pending','active','done'].map(s=>`<option ${data?.status===s?'selected':''} value="${s}">${s}</option>`).join('')}
-          </select>
-        </div>
+          </select></div>
       </div>
       <div class="form-group"><label>Due Date</label>
         <input type="date" id="f_due" value="${data?.due||''}" /></div>
@@ -811,81 +845,42 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
   modalMode = null; editingId = null;
 }
-
-function maybeClose(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-}
+function maybeClose(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
 
 function saveModal() {
   const name = document.getElementById('f_name')?.value.trim();
   if (!name) { alert('Name is required.'); return; }
 
   if (modalMode === 'project') {
-    const obj = {
-      id: editingId || uid(),
-      name,
-      client:   document.getElementById('f_client').value.trim(),
-      status:   document.getElementById('f_status').value,
-      progress: parseInt(document.getElementById('f_progress').value),
-      due:      document.getElementById('f_due').value,
-      notes:    document.getElementById('f_notes').value.trim(),
-    };
-    if (editingId) {
-      projects = projects.map(p => p.id === editingId ? obj : p);
-      logActivity(`Project "${obj.name}" updated`);
-    } else {
-      projects.push(obj);
-      logActivity(`Project "${obj.name}" added`);
-    }
+    const obj = { id: editingId||uid(), name, client: document.getElementById('f_client').value.trim(),
+      status: document.getElementById('f_status').value, progress: parseInt(document.getElementById('f_progress').value),
+      due: document.getElementById('f_due').value, notes: document.getElementById('f_notes').value.trim() };
+    if (editingId) { projects = projects.map(p => p.id===editingId ? obj : p); logActivity(`Project "${obj.name}" updated`); }
+    else { projects.push(obj); logActivity(`Project "${obj.name}" added`); }
   } else if (modalMode === 'task') {
-    const obj = {
-      id:       editingId || uid(),
-      name,
-      priority: document.getElementById('f_priority').value,
-      status:   document.getElementById('f_status').value,
-      due:      document.getElementById('f_due').value,
-    };
-    if (editingId) {
-      tasks = tasks.map(t => t.id === editingId ? obj : t);
-      logActivity(`Task "${obj.name}" updated`);
-    } else {
-      tasks.push(obj);
-      logActivity(`Task "${obj.name}" added`);
-    }
+    const obj = { id: editingId||uid(), name, priority: document.getElementById('f_priority').value,
+      status: document.getElementById('f_status').value, due: document.getElementById('f_due').value };
+    if (editingId) { tasks = tasks.map(t => t.id===editingId ? obj : t); logActivity(`Task "${obj.name}" updated`); }
+    else { tasks.push(obj); logActivity(`Task "${obj.name}" added`); }
   } else if (modalMode === 'contact') {
-    const obj = {
-      id:      editingId || uid(),
-      name,
-      company: document.getElementById('f_company').value.trim(),
-      email:   document.getElementById('f_email').value.trim(),
-      phone:   document.getElementById('f_phone').value.trim(),
-    };
-    if (editingId) {
-      contacts = contacts.map(c => c.id === editingId ? obj : c);
-      logActivity(`Contact "${obj.name}" updated`);
-    } else {
-      contacts.push(obj);
-      logActivity(`Contact "${obj.name}" added`);
-    }
+    const obj = { id: editingId||uid(), name, company: document.getElementById('f_company').value.trim(),
+      email: document.getElementById('f_email').value.trim(), phone: document.getElementById('f_phone').value.trim() };
+    if (editingId) { contacts = contacts.map(c => c.id===editingId ? obj : c); logActivity(`Contact "${obj.name}" updated`); }
+    else { contacts.push(obj); logActivity(`Contact "${obj.name}" added`); }
   }
 
-  persist();
-  render();
-  closeModal();
+  persist(); render(); closeModal();
 }
 
-// ── Edit shortcuts ──
 function editProject(id) { openModal('project', projects.find(p=>p.id===id)); }
 function editTask(id)    { openModal('task',    tasks.find(t=>t.id===id));    }
 function editContact(id) { openModal('contact', contacts.find(c=>c.id===id)); }
 
-// ── Keyboard ──
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
   if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modalOverlay').classList.contains('open')) saveModal();
 });
 
-// ── Init ──
 render();
 </script>
 </body>
