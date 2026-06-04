@@ -276,6 +276,42 @@
     .btn-danger:hover { opacity: .85; }
 
     input[type="range"] { accent-color: var(--accent); }
+
+    /* ── Project groups ── */
+    .group-header { cursor: pointer; user-select: none; }
+    .group-header td {
+      padding: 9px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--accent2);
+      background: rgba(108,99,255,.08);
+      border-top: 2px solid var(--border);
+    }
+    .group-header:first-child td { border-top: none; }
+    .group-header:hover td { background: rgba(108,99,255,.14); }
+    .group-header.internal td { color: var(--muted); background: rgba(107,107,138,.08); }
+    .group-header.internal:hover td { background: rgba(107,107,138,.13); }
+    .group-toggle { display: inline-block; font-size: 9px; margin-right: 8px; transition: transform .18s; }
+    .group-toggle.collapsed { transform: rotate(-90deg); }
+    .group-count { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: 11px; text-transform: none; letter-spacing: 0; }
+    .group-row.hidden { display: none; }
+
+    /* ── Search ── */
+    .search-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 12px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      width: 190px;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); }
+    .section-header-left { display: flex; align-items: center; gap: 12px; }
   </style>
 </head>
 <body>
@@ -295,7 +331,10 @@
   <!-- Projects -->
   <div class="section">
     <div class="section-header">
-      <div class="section-title">Projects</div>
+      <div class="section-header-left">
+        <div class="section-title">Projects</div>
+        <input class="search-input" id="projectSearch" placeholder="Search projects…" oninput="renderProjects()" />
+      </div>
       <button class="btn" onclick="openModal('project')">+ Add Project</button>
     </div>
     <div class="card">
@@ -303,7 +342,6 @@
         <thead>
           <tr>
             <th>Project</th>
-            <th>Client</th>
             <th>Status</th>
             <th>Progress</th>
             <th>Due</th>
@@ -492,33 +530,91 @@ function fmtDate(d) {
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+const collapsedGroups = new Set();
+
+function slugify(s) { return s.replace(/[^a-z0-9]/gi, '_'); }
+
+function toggleGroup(client) {
+  const slug = slugify(client);
+  if (collapsedGroups.has(slug)) {
+    collapsedGroups.delete(slug);
+  } else {
+    collapsedGroups.add(slug);
+  }
+  // toggle visibility without full re-render
+  const rows = document.querySelectorAll('.group-row-' + slug);
+  const icon = document.getElementById('gtoggle-' + slug);
+  const isCollapsed = collapsedGroups.has(slug);
+  rows.forEach(r => r.classList.toggle('hidden', isCollapsed));
+  if (icon) icon.classList.toggle('collapsed', isCollapsed);
+}
+
 function renderProjects() {
   const body = document.getElementById('projectsBody');
   if (!projects.length) {
-    body.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div>No projects yet</div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div>No projects yet</div></td></tr>`;
     return;
   }
-  body.innerHTML = projects.map(p => `
-    <tr>
-      <td><strong>${esc(p.name)}</strong></td>
-      <td>${esc(p.client)}</td>
-      <td>${statusBadge(p.status)}</td>
-      <td>
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
-          <div class="progress-label">${p.progress}%</div>
-        </div>
-      </td>
-      <td>${fmtDate(p.due)}</td>
-      <td><span class="notes-text" title="${esc(p.notes)}">${esc(p.notes)||'—'}</span></td>
-      <td>
-        <div class="row-actions">
-          <button class="btn btn-ghost btn-sm" onclick="editProject('${p.id}')">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteItem('project','${p.id}')">✕</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+
+  const q = (document.getElementById('projectSearch')?.value || '').toLowerCase();
+
+  // Separate internal from client projects
+  const clientProjects  = projects.filter(p => !p.client.startsWith('Internal'));
+  const internalProjects = projects.filter(p => p.client.startsWith('Internal'));
+
+  // Group by client, preserving insertion order
+  const groupMap = (list) => {
+    const map = {};
+    list.forEach(p => { (map[p.client] = map[p.client] || []).push(p); });
+    return Object.entries(map);
+  };
+
+  const renderRow = (p) => {
+    if (q && !p.name.toLowerCase().includes(q) && !p.client.toLowerCase().includes(q)) return '';
+    const slug = slugify(p.client);
+    const hidden = collapsedGroups.has(slug) ? 'hidden' : '';
+    return `
+      <tr class="group-row group-row-${slug} ${hidden}">
+        <td><strong>${esc(p.name)}</strong></td>
+        <td>${statusBadge(p.status)}</td>
+        <td>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+            <div class="progress-label">${p.progress}%</div>
+          </div>
+        </td>
+        <td>${fmtDate(p.due)}</td>
+        <td><span class="notes-text" title="${esc(p.notes)}">${esc(p.notes)||'—'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-sm" onclick="editProject('${p.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteItem('project','${p.id}')">✕</button>
+          </div>
+        </td>
+      </tr>`;
+  };
+
+  const renderGroupHeader = (client, projs, isInternal = false) => {
+    const slug = slugify(client);
+    const visible = projs.filter(p => !q || p.name.toLowerCase().includes(q) || p.client.toLowerCase().includes(q));
+    if (visible.length === 0) return '';
+    const isCollapsed = collapsedGroups.has(slug);
+    return `
+      <tr class="group-header ${isInternal ? 'internal' : ''}" onclick="toggleGroup('${client.replace(/'/g,"\\'")}')">
+        <td colspan="6">
+          <span class="group-toggle ${isCollapsed ? 'collapsed' : ''}" id="gtoggle-${slug}">▼</span>
+          ${esc(client)}
+          <span class="group-count">${visible.length} project${visible.length !== 1 ? 's' : ''}</span>
+        </td>
+      </tr>
+      ${visible.map(renderRow).join('')}`;
+  };
+
+  const clientHtml   = groupMap(clientProjects).map(([c, ps]) => renderGroupHeader(c, ps, false)).join('');
+  const internalHtml = groupMap(internalProjects).map(([c, ps]) => renderGroupHeader(c, ps, true)).join('');
+
+  body.innerHTML = clientHtml + internalHtml ||
+    `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div>No results</div></td></tr>`;
 }
 
 function renderTasks() {
