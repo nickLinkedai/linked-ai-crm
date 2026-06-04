@@ -387,29 +387,43 @@ let activity = load('activity');
 let modalMode = null;
 let editingId = null;
 
-// ── Seed demo data if empty ──
-if (!projects.length && !tasks.length) {
+// ── Seed data — bump DATA_VERSION to force-reset on next load ──
+const DATA_VERSION = '2';
+if (localStorage.getItem('lai_version') !== DATA_VERSION) {
   projects = [
-    { id: uid(), name: 'AI Chatbot MVP', client: 'Acme Corp', status: 'active', progress: 65, due: '2026-07-15', notes: 'Phase 1 nearly complete' },
-    { id: uid(), name: 'Lead Gen Automation', client: 'TechStart Inc', status: 'pending', progress: 10, due: '2026-08-01', notes: 'Awaiting spec sign-off' },
-    { id: uid(), name: 'Sales Dashboard', client: 'Nexus Ltd', status: 'done', progress: 100, due: '2026-05-30', notes: 'Delivered and accepted' },
+    // ── Client Projects ──
+    { id: uid(), name: 'MNG Carpentry CRM',               client: 'MNG Carpentry',   status: 'active',  progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Tyson Funk CRM',                  client: 'Tyson Funk',      status: 'active',  progress: 0,  due: '', notes: '' },
+
+    // ── Global Drain (5 projects) ──
+    { id: uid(), name: 'Receipt Tracker',                 client: 'Global Drain',    status: 'active',  progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 2',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 3',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 4',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 5',                       client: 'Global Drain',    status: 'pending', progress: 0,  due: '', notes: '' },
+
+    // ── Preceipt (5 projects) ──
+    { id: uid(), name: 'Project 1',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 2',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 3',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 4',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Project 5',                       client: 'Preceipt',        status: 'pending', progress: 0,  due: '', notes: '' },
+
+    // ── Evolution Wheel ──
+    { id: uid(), name: 'Marketing Engine / Scraper',      client: 'Evolution Wheel', status: 'active',  progress: 0,  due: '', notes: '' },
+
+    // ── Argus ──
+    { id: uid(), name: 'Pilot Demo — CSR Invoice PDF Flow', client: 'Argus',         status: 'active',  progress: 0,  due: '', notes: '' },
+
+    // ── Internal / Business ──
+    { id: uid(), name: 'Insurance',                       client: 'Internal',        status: 'pending', progress: 0,  due: '', notes: '' },
+    { id: uid(), name: 'Mitacs Grant',                    client: 'Internal — Grants', status: 'pending', progress: 0, due: '', notes: '' },
+    { id: uid(), name: 'IRAP Grant',                      client: 'Internal — Grants', status: 'pending', progress: 0, due: '', notes: '' },
   ];
-  tasks = [
-    { id: uid(), name: 'Follow up with Acme re: API keys', priority: 'high', due: '2026-06-07', status: 'pending' },
-    { id: uid(), name: 'Draft proposal for TechStart', priority: 'medium', due: '2026-06-10', status: 'pending' },
-    { id: uid(), name: 'Send invoice — Nexus Ltd', priority: 'high', due: '2026-06-05', status: 'done' },
-    { id: uid(), name: 'Weekly team standup prep', priority: 'low', due: '2026-06-06', status: 'pending' },
-  ];
-  contacts = [
-    { id: uid(), name: 'Sarah Chen', company: 'Acme Corp', email: 'sarah@acme.com', phone: '555-0101' },
-    { id: uid(), name: 'James Wu', company: 'TechStart Inc', email: 'james@techstart.io', phone: '555-0202' },
-    { id: uid(), name: 'Priya Patel', company: 'Nexus Ltd', email: 'priya@nexus.co', phone: '555-0303' },
-  ];
-  activity = [
-    { text: 'Project "Sales Dashboard" marked as Done', time: '1 hour ago' },
-    { text: 'Contact Priya Patel added', time: '2 hours ago' },
-    { text: 'Task "Send invoice — Nexus Ltd" completed', time: 'Today' },
-  ];
+  tasks    = [];
+  contacts = [];
+  activity = [{ text: 'CRM initialized with Linked AI projects', time: 'Just now' }];
+  localStorage.setItem('lai_version', DATA_VERSION);
   persist();
 }
 
