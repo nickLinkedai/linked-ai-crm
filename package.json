@@ -1,0 +1,12 @@
+{
+  "name": "linked-ai-crm",
+  "version": "1.0.0",
+  "description": "Linked AI CRM Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

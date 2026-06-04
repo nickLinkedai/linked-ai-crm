@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linked AI — CRM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f14;
+      --surface: #17171f;
+      --surface2: #1e1e2a;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --text: #e2e2f0;
+      --muted: #6b6b8a;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.3px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .today-date {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── Stat Cards ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 700; line-height: 1; }
+    .stat-sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .c-green { color: var(--green); }
+    .c-yellow { color: var(--yellow); }
+    .c-red { color: var(--red); }
+    .c-blue { color: var(--blue); }
+
+    /* ── Section ── */
+    .section { display: flex; flex-direction: column; gap: 14px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title { font-size: 16px; font-weight: 600; }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; }
+
+    /* ── Two-column grid ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+
+    /* ── Table ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      background: var(--surface2);
+      font-weight: 600;
+    }
+    tbody tr { border-top: 1px solid var(--border); }
+    tbody tr:hover { background: var(--surface2); }
+    td { padding: 12px 16px; vertical-align: middle; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-active   { background: rgba(34,197,94,.15);  color: var(--green); }
+    .badge-pending  { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .badge-done     { background: rgba(107,107,138,.15); color: var(--muted); }
+    .badge-paused   { background: rgba(59,130,246,.15); color: var(--blue); }
+    .badge-high     { background: rgba(239,68,68,.15); color: var(--red); }
+    .badge-medium   { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .badge-low      { background: rgba(34,197,94,.15); color: var(--green); }
+
+    /* ── Row actions ── */
+    .row-actions { display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+    tbody tr:hover .row-actions { opacity: 1; }
+
+    /* ── Notes ── */
+    .notes-text { color: var(--muted); font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Progress bar ── */
+    .progress-wrap { display: flex; align-items: center; gap: 8px; }
+    .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 80px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width .3s; }
+    .progress-label { font-size: 12px; color: var(--muted); min-width: 30px; text-align: right; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      width: 480px;
+      max-width: calc(100vw - 40px);
+      transform: translateY(12px);
+      transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: none; }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--surface2); }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+    /* ── Empty state ── */
+    .empty { padding: 40px; text-align: center; color: var(--muted); }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* ── Contacts sidebar ── */
+    .contact-list { display: flex; flex-direction: column; gap: 0; }
+    .contact-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .contact-item:first-child { border-top: none; }
+    .contact-item:hover { background: var(--surface2); }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+      flex-shrink: 0;
+    }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-weight: 600; font-size: 13px; }
+    .contact-detail { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Activity feed ── */
+    .activity-list { display: flex; flex-direction: column; }
+    .activity-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .activity-item:first-child { border-top: none; }
+    .activity-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .activity-text { font-size: 13px; line-height: 1.5; }
+    .activity-time { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      main { padding: 16px 12px; }
+    }
+
+    /* ── Delete confirm ── */
+    .btn-danger { background: var(--red); }
+    .btn-danger:hover { opacity: .85; }
+
+    input[type="range"] { accent-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    Linked AI
+  </div>
+  <div class="today-date" id="headerDate"></div>
+</header>
+
+<main>
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- Projects -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Projects</div>
+      <button class="btn" onclick="openModal('project')">+ Add Project</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Due</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tasks + Contacts -->
+  <div class="two-col">
+
+    <!-- Tasks -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Tasks</div>
+        <button class="btn" onclick="openModal('task')">+ Add Task</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Priority</th>
+              <th>Due</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tasksBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Contacts</div>
+        <button class="btn" onclick="openModal('contact')">+ Add Contact</button>
+      </div>
+      <div class="card contact-list" id="contactsList"></div>
+    </div>
+
+  </div>
+
+  <!-- Activity Feed -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Recent Activity</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearActivity()">Clear</button>
+    </div>
+    <div class="card activity-list" id="activityFeed"></div>
+  </div>
+</main>
+
+<!-- ── Modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="maybeClose(event)">
+  <div class="modal" id="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" id="modalSave" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage helpers ──
+const load = key => JSON.parse(localStorage.getItem('lai_' + key) || '[]');
+const save = (key, val) => localStorage.setItem('lai_' + key, JSON.stringify(val));
+
+// ── State ──
+let projects = load('projects');
+let tasks    = load('tasks');
+let contacts = load('contacts');
+let activity = load('activity');
+let modalMode = null;
+let editingId = null;
+
+// ── Seed demo data if empty ──
+if (!projects.length && !tasks.length) {
+  projects = [
+    { id: uid(), name: 'AI Chatbot MVP', client: 'Acme Corp', status: 'active', progress: 65, due: '2026-07-15', notes: 'Phase 1 nearly complete' },
+    { id: uid(), name: 'Lead Gen Automation', client: 'TechStart Inc', status: 'pending', progress: 10, due: '2026-08-01', notes: 'Awaiting spec sign-off' },
+    { id: uid(), name: 'Sales Dashboard', client: 'Nexus Ltd', status: 'done', progress: 100, due: '2026-05-30', notes: 'Delivered and accepted' },
+  ];
+  tasks = [
+    { id: uid(), name: 'Follow up with Acme re: API keys', priority: 'high', due: '2026-06-07', status: 'pending' },
+    { id: uid(), name: 'Draft proposal for TechStart', priority: 'medium', due: '2026-06-10', status: 'pending' },
+    { id: uid(), name: 'Send invoice — Nexus Ltd', priority: 'high', due: '2026-06-05', status: 'done' },
+    { id: uid(), name: 'Weekly team standup prep', priority: 'low', due: '2026-06-06', status: 'pending' },
+  ];
+  contacts = [
+    { id: uid(), name: 'Sarah Chen', company: 'Acme Corp', email: 'sarah@acme.com', phone: '555-0101' },
+    { id: uid(), name: 'James Wu', company: 'TechStart Inc', email: 'james@techstart.io', phone: '555-0202' },
+    { id: uid(), name: 'Priya Patel', company: 'Nexus Ltd', email: 'priya@nexus.co', phone: '555-0303' },
+  ];
+  activity = [
+    { text: 'Project "Sales Dashboard" marked as Done', time: '1 hour ago' },
+    { text: 'Contact Priya Patel added', time: '2 hours ago' },
+    { text: 'Task "Send invoice — Nexus Ltd" completed', time: 'Today' },
+  ];
+  persist();
+}
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function persist() {
+  save('projects', projects);
+  save('tasks', tasks);
+  save('contacts', contacts);
+  save('activity', activity);
+}
+
+// ── Date ──
+document.getElementById('headerDate').textContent =
+  new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+// ── Render ──
+function render() {
+  renderStats();
+  renderProjects();
+  renderTasks();
+  renderContacts();
+  renderActivity();
+}
+
+function renderStats() {
+  const active    = projects.filter(p => p.status === 'active').length;
+  const pending   = projects.filter(p => p.status === 'pending').length;
+  const openTasks = tasks.filter(t => t.status !== 'done').length;
+  const highPri   = tasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Active Projects</div>
+      <div class="stat-value c-green">${active}</div>
+      <div class="stat-sub">${pending} pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open Tasks</div>
+      <div class="stat-value c-yellow">${openTasks}</div>
+      <div class="stat-sub">${highPri} high priority</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Contacts</div>
+      <div class="stat-value c-blue">${contacts.length}</div>
+      <div class="stat-sub">in pipeline</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value c-green">${projects.filter(p=>p.status==='done').length + tasks.filter(t=>t.status==='done').length}</div>
+      <div class="stat-sub">projects + tasks</div>
+    </div>
+  `;
+}
+
+function statusBadge(s) {
+  const map = { active:'badge-active', pending:'badge-pending', done:'badge-done', paused:'badge-paused' };
+  return `<span class="badge ${map[s]||'badge-pending'}">${s}</span>`;
+}
+function priorityBadge(p) {
+  const map = { high:'badge-high', medium:'badge-medium', low:'badge-low' };
+  return `<span class="badge ${map[p]||'badge-medium'}">${p}</span>`;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderProjects() {
+  const body = document.getElementById('projectsBody');
+  if (!projects.length) {
+    body.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div>No projects yet</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = projects.map(p => `
+    <tr>
+      <td><strong>${esc(p.name)}</strong></td>
+      <td>${esc(p.client)}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+          <div class="progress-label">${p.progress}%</div>
+        </div>
+      </td>
+      <td>${fmtDate(p.due)}</td>
+      <td><span class="notes-text" title="${esc(p.notes)}">${esc(p.notes)||'—'}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editProject('${p.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('project','${p.id}')">✕</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderTasks() {
+  const body = document.getElementById('tasksBody');
+  if (!tasks.length) {
+    body.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">✅</div>No tasks yet</div></td></tr>`;
+    return;
+  }
+  const sorted = [...tasks].sort((a,b) => {
+    const order = { high:0, medium:1, low:2 };
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (b.status === 'done' && a.status !== 'done') return -1;
+    return (order[a.priority]||1) - (order[b.priority]||1);
+  });
+  body.innerHTML = sorted.map(t => `
+    <tr style="${t.status==='done'?'opacity:.5':''}">
+      <td>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" ${t.status==='done'?'checked':''} onchange="toggleTask('${t.id}')" style="accent-color:var(--accent)">
+          <span style="${t.status==='done'?'text-decoration:line-through':''}">${esc(t.name)}</span>
+        </label>
+      </td>
+      <td>${priorityBadge(t.priority)}</td>
+      <td>${fmtDate(t.due)}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editTask('${t.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('task','${t.id}')">✕</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderContacts() {
+  const el = document.getElementById('contactsList');
+  if (!contacts.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>No contacts yet</div>`;
+    return;
+  }
+  el.innerHTML = contacts.map(c => `
+    <div class="contact-item">
+      <div class="avatar">${initials(c.name)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${esc(c.name)}</div>
+        <div class="contact-detail">${esc(c.company)} · ${esc(c.email)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editContact('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('contact','${c.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderActivity() {
+  const el = document.getElementById('activityFeed');
+  if (!activity.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📡</div>No activity yet</div>`;
+    return;
+  }
+  el.innerHTML = activity.slice(0, 15).map(a => `
+    <div class="activity-item">
+      <div class="activity-dot"></div>
+      <div>
+        <div class="activity-text">${esc(a.text)}</div>
+        <div class="activity-time">${esc(a.time)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function initials(name) {
+  return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Toggle task ──
+function toggleTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === 'done' ? 'pending' : 'done';
+  logActivity(t.status === 'done' ? `Task "${t.name}" completed` : `Task "${t.name}" reopened`);
+  persist();
+  render();
+}
+
+// ── Delete ──
+function deleteItem(type, id) {
+  if (!confirm('Delete this item?')) return;
+  if (type === 'project') {
+    const p = projects.find(x=>x.id===id);
+    projects = projects.filter(x=>x.id!==id);
+    logActivity(`Project "${p?.name}" deleted`);
+  } else if (type === 'task') {
+    const t = tasks.find(x=>x.id===id);
+    tasks = tasks.filter(x=>x.id!==id);
+    logActivity(`Task "${t?.name}" deleted`);
+  } else if (type === 'contact') {
+    const c = contacts.find(x=>x.id===id);
+    contacts = contacts.filter(x=>x.id!==id);
+    logActivity(`Contact "${c?.name}" removed`);
+  }
+  persist();
+  render();
+}
+
+// ── Activity ──
+function logActivity(text) {
+  activity.unshift({ text, time: 'Just now' });
+  activity = activity.slice(0, 50);
+}
+function clearActivity() {
+  activity = [];
+  persist();
+  render();
+}
+
+// ── Modal ──
+function openModal(mode, data = null) {
+  modalMode = mode;
+  editingId = data?.id || null;
+  const overlay = document.getElementById('modalOverlay');
+  const title   = document.getElementById('modalTitle');
+  const body    = document.getElementById('modalBody');
+
+  if (mode === 'project') {
+    title.textContent = data ? 'Edit Project' : 'New Project';
+    body.innerHTML = `
+      <div class="form-group"><label>Project Name *</label>
+        <input id="f_name" value="${esc(data?.name||'')}" placeholder="e.g. AI Chatbot MVP" /></div>
+      <div class="form-group"><label>Client / Company</label>
+        <input id="f_client" value="${esc(data?.client||'')}" placeholder="e.g. Acme Corp" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label>
+          <select id="f_status">
+            ${['active','pending','paused','done'].map(s=>`<option ${data?.status===s?'selected':''} value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Due Date</label>
+          <input type="date" id="f_due" value="${data?.due||''}" /></div>
+      </div>
+      <div class="form-group"><label>Progress (${data?.progress||0}%)</label>
+        <input type="range" id="f_progress" min="0" max="100" value="${data?.progress||0}" oninput="this.previousElementSibling.textContent='Progress (' + this.value + '%)'" />
+      </div>
+      <div class="form-group"><label>Notes</label>
+        <textarea id="f_notes">${esc(data?.notes||'')}</textarea></div>
+    `;
+  } else if (mode === 'task') {
+    title.textContent = data ? 'Edit Task' : 'New Task';
+    body.innerHTML = `
+      <div class="form-group"><label>Task Name *</label>
+        <input id="f_name" value="${esc(data?.name||'')}" placeholder="e.g. Follow up with client" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Priority</label>
+          <select id="f_priority">
+            ${['high','medium','low'].map(p=>`<option ${data?.priority===p?'selected':''} value="${p}">${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="f_status">
+            ${['pending','active','done'].map(s=>`<option ${data?.status===s?'selected':''} value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Due Date</label>
+        <input type="date" id="f_due" value="${data?.due||''}" /></div>
+    `;
+  } else if (mode === 'contact') {
+    title.textContent = data ? 'Edit Contact' : 'New Contact';
+    body.innerHTML = `
+      <div class="form-group"><label>Full Name *</label>
+        <input id="f_name" value="${esc(data?.name||'')}" placeholder="e.g. Sarah Chen" /></div>
+      <div class="form-group"><label>Company</label>
+        <input id="f_company" value="${esc(data?.company||'')}" placeholder="e.g. Acme Corp" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label>
+          <input type="email" id="f_email" value="${esc(data?.email||'')}" placeholder="email@company.com" /></div>
+        <div class="form-group"><label>Phone</label>
+          <input id="f_phone" value="${esc(data?.phone||'')}" placeholder="555-0100" /></div>
+      </div>
+    `;
+  }
+
+  overlay.classList.add('open');
+  setTimeout(() => document.getElementById('f_name')?.focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalMode = null; editingId = null;
+}
+
+function maybeClose(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveModal() {
+  const name = document.getElementById('f_name')?.value.trim();
+  if (!name) { alert('Name is required.'); return; }
+
+  if (modalMode === 'project') {
+    const obj = {
+      id: editingId || uid(),
+      name,
+      client:   document.getElementById('f_client').value.trim(),
+      status:   document.getElementById('f_status').value,
+      progress: parseInt(document.getElementById('f_progress').value),
+      due:      document.getElementById('f_due').value,
+      notes:    document.getElementById('f_notes').value.trim(),
+    };
+    if (editingId) {
+      projects = projects.map(p => p.id === editingId ? obj : p);
+      logActivity(`Project "${obj.name}" updated`);
+    } else {
+      projects.push(obj);
+      logActivity(`Project "${obj.name}" added`);
+    }
+  } else if (modalMode === 'task') {
+    const obj = {
+      id:       editingId || uid(),
+      name,
+      priority: document.getElementById('f_priority').value,
+      status:   document.getElementById('f_status').value,
+      due:      document.getElementById('f_due').value,
+    };
+    if (editingId) {
+      tasks = tasks.map(t => t.id === editingId ? obj : t);
+      logActivity(`Task "${obj.name}" updated`);
+    } else {
+      tasks.push(obj);
+      logActivity(`Task "${obj.name}" added`);
+    }
+  } else if (modalMode === 'contact') {
+    const obj = {
+      id:      editingId || uid(),
+      name,
+      company: document.getElementById('f_company').value.trim(),
+      email:   document.getElementById('f_email').value.trim(),
+      phone:   document.getElementById('f_phone').value.trim(),
+    };
+    if (editingId) {
+      contacts = contacts.map(c => c.id === editingId ? obj : c);
+      logActivity(`Contact "${obj.name}" updated`);
+    } else {
+      contacts.push(obj);
+      logActivity(`Contact "${obj.name}" added`);
+    }
+  }
+
+  persist();
+  render();
+  closeModal();
+}
+
+// ── Edit shortcuts ──
+function editProject(id) { openModal('project', projects.find(p=>p.id===id)); }
+function editTask(id)    { openModal('task',    tasks.find(t=>t.id===id));    }
+function editContact(id) { openModal('contact', contacts.find(c=>c.id===id)); }
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modalOverlay').classList.contains('open')) saveModal();
+});
+
+// ── Init ──
+render();
+</script>
+</body>
+</html>
