@@ -354,6 +354,89 @@
     }
 
     input[type="range"] { accent-color: var(--cyan); width: 100%; }
+
+    /* ── Calendar ── */
+    .cal-wrap {
+      background: linear-gradient(var(--card), var(--card)) padding-box,
+                  linear-gradient(155deg, rgba(0,200,255,.18), rgba(0,200,255,.03)) border-box;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,200,255,.05);
+    }
+    .cal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--bord);
+      background: rgba(0,200,255,.04);
+    }
+    .cal-nav { display: flex; align-items: center; gap: 10px; }
+    .cal-month-label { font-size: 15px; font-weight: 800; letter-spacing: -.02em; min-width: 160px; text-align: center; }
+    .cal-nav-btn {
+      background: rgba(0,200,255,.08); border: 1px solid var(--bord);
+      color: var(--cyan); border-radius: 7px; padding: 5px 12px;
+      cursor: pointer; font-size: 13px; font-family: inherit;
+      transition: background .15s;
+    }
+    .cal-nav-btn:hover { background: var(--c15); }
+    .cal-accounts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cal-account-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      border: 1px solid; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .cal-account-pill:hover { opacity: .75; }
+    .pill-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .connect-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 7px;
+      background: rgba(0,200,255,.08); border: 1px solid var(--bord2);
+      color: var(--cyan); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; text-decoration: none;
+      transition: background .15s;
+    }
+    .connect-btn:hover { background: var(--c15); }
+    .cal-grid-wrap { padding: 0 16px 16px; }
+    .cal-dow-row {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      padding: 10px 0 4px;
+    }
+    .cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+    .cal-days {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-day {
+      min-height: 82px; padding: 6px 7px;
+      border-radius: 8px;
+      background: rgba(0,200,255,.02);
+      border: 1px solid transparent;
+      transition: border-color .15s;
+      overflow: hidden;
+    }
+    .cal-day:hover { border-color: var(--bord); }
+    .cal-day.today { border-color: var(--bord2); background: rgba(0,200,255,.05); }
+    .cal-day.other-month { opacity: .3; }
+    .cal-day-num {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      margin-bottom: 4px; line-height: 1;
+    }
+    .cal-day.today .cal-day-num { color: var(--cyan); }
+    .cal-event {
+      display: block; font-size: 10px; font-weight: 600;
+      padding: 2px 5px; border-radius: 4px;
+      margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      cursor: pointer; line-height: 1.4;
+      text-decoration: none;
+    }
+    .cal-more { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 1px; }
+    .cal-no-google {
+      padding: 40px; text-align: center; color: var(--muted);
+    }
+    .cal-no-google p { margin-bottom: 14px; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -393,6 +476,14 @@
 
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
+
+  <!-- Calendar -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Calendar</div>
+    </div>
+    <div class="cal-wrap" id="calendarWrap"></div>
+  </div>
 
   <!-- Projects -->
   <div class="section">
@@ -880,6 +971,148 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
   if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modalOverlay').classList.contains('open')) saveModal();
 });
+
+// ── Calendar ──
+const ACCOUNT_COLORS = [
+  { bg: 'rgba(0,200,255,.15)',  border: 'rgba(0,200,255,.6)',  text: '#00c8ff',  dot: '#00c8ff'  },
+  { bg: 'rgba(0,200,83,.13)',   border: 'rgba(0,200,83,.5)',   text: '#00c853',  dot: '#00c853'  },
+  { bg: 'rgba(254,188,46,.13)', border: 'rgba(254,188,46,.5)', text: '#febc2e',  dot: '#febc2e'  },
+];
+
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calEvents    = [];
+let calAccounts  = [];
+
+async function loadCalendar() {
+  try {
+    const [evRes, acRes] = await Promise.all([fetch('/api/events'), fetch('/api/accounts')]);
+    calEvents   = await evRes.json();
+    calAccounts = await acRes.json();
+  } catch { /* server not ready yet */ }
+  renderCalendar();
+
+  // check for ?connected= in URL after OAuth
+  const params = new URLSearchParams(location.search);
+  if (params.get('connected')) {
+    history.replaceState({}, '', '/');
+  }
+}
+
+function renderCalendar() {
+  const wrap = document.getElementById('calendarWrap');
+  if (!wrap) return;
+
+  const today     = new Date();
+  const firstDay  = new Date(calYear, calMonth, 1);
+  const lastDay   = new Date(calYear, calMonth + 1, 0);
+  const startCell = new Date(firstDay); startCell.setDate(1 - firstDay.getDay());
+  const monthName = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Map email → color index
+  const colorMap = {};
+  calAccounts.forEach((a, i) => { colorMap[a.email] = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length]; });
+
+  // Map date string → events
+  const evByDay = {};
+  calEvents.forEach(e => {
+    if (!e.start_time) return;
+    const key = e.start_time.slice(0, 10);
+    (evByDay[key] = evByDay[key] || []).push(e);
+  });
+
+  // Account pills
+  const pillsHtml = calAccounts.length
+    ? calAccounts.map((a, i) => {
+        const c = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
+        return `<div class="cal-account-pill"
+          style="background:${c.bg};border-color:${c.border};color:${c.text}"
+          title="Disconnect ${esc(a.email)}"
+          onclick="disconnectAccount('${esc(a.email)}')">
+          <div class="pill-dot" style="background:${c.dot}"></div>
+          ${esc(a.email.split('@')[0])}
+        </div>`;
+      }).join('')
+    : '';
+
+  const connectSlots = calAccounts.length < 3
+    ? `<a class="connect-btn" href="/auth/google">+ Connect Google Account</a>`
+    : '';
+
+  // Build day cells
+  let cells = '';
+  const cursor = new Date(startCell);
+  for (let i = 0; i < 42; i++) {
+    const dateStr   = cursor.toISOString().slice(0, 10);
+    const isToday   = cursor.toDateString() === today.toDateString();
+    const otherMon  = cursor.getMonth() !== calMonth;
+    const dayEvents = evByDay[dateStr] || [];
+    const show      = dayEvents.slice(0, 2);
+    const extra     = dayEvents.length - show.length;
+
+    const evHtml = show.map(e => {
+      const c = colorMap[e.google_account] || ACCOUNT_COLORS[0];
+      const title = esc(e.title);
+      const href  = e.html_link ? `href="${esc(e.html_link)}" target="_blank"` : '';
+      return `<a class="cal-event" ${href}
+        style="background:${c.bg};color:${c.text};border-left:2px solid ${c.dot}"
+        title="${title}">${title}</a>`;
+    }).join('');
+
+    cells += `<div class="cal-day ${isToday ? 'today' : ''} ${otherMon ? 'other-month' : ''}">
+      <div class="cal-day-num">${cursor.getDate()}</div>
+      ${evHtml}
+      ${extra > 0 ? `<div class="cal-more">+${extra} more</div>` : ''}
+    </div>`;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const noGoogleHtml = calAccounts.length === 0 ? `
+    <div class="cal-no-google">
+      <p>Connect your Google accounts to see your calendar events here.</p>
+      <a class="connect-btn" href="/auth/google" style="display:inline-flex">+ Connect Google Account</a>
+    </div>` : '';
+
+  wrap.innerHTML = `
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calShift(-1)">←</button>
+        <div class="cal-month-label">${monthName}</div>
+        <button class="cal-nav-btn" onclick="calShift(1)">→</button>
+        <button class="cal-nav-btn" onclick="loadCalendar()">↻</button>
+      </div>
+      <div class="cal-accounts">
+        ${pillsHtml}
+        ${connectSlots}
+      </div>
+    </div>
+    ${noGoogleHtml}
+    ${calAccounts.length > 0 ? `
+    <div class="cal-grid-wrap">
+      <div class="cal-dow-row">
+        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+      </div>
+      <div class="cal-days">${cells}</div>
+    </div>` : ''}
+  `;
+}
+
+function calShift(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+async function disconnectAccount(email) {
+  if (!confirm(`Disconnect ${email} from the calendar?`)) return;
+  await fetch(`/api/accounts/${encodeURIComponent(email)}`, { method: 'DELETE' });
+  loadCalendar();
+}
+
+// Refresh calendar events every 5 minutes
+loadCalendar();
+setInterval(loadCalendar, 5 * 60 * 1000);
 
 render();
 </script>
